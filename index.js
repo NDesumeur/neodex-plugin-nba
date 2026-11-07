@@ -24,6 +24,10 @@ const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\
 .nbaGame.click:hover{--c:var(--violet)}
 .nbaPl{all:unset;cursor:var(--cp,pointer);color:#fff;text-decoration:underline dotted rgba(255,255,255,.35)}
 .nbaPl:hover{color:var(--pink)}
+.nbaTn{cursor:var(--cp,pointer)}.nbaTn:hover{color:var(--pink)}
+.nbaHead{display:flex;align-items:center;gap:14px}.nbaHead img{width:56px;height:56px;object-fit:contain}
+.nbaSch{display:grid;grid-template-columns:110px 28px 1fr auto;gap:10px;align-items:center;font-size:14px;color:var(--lilac);padding:5px 0;border-top:1px solid rgba(255,255,255,.05);cursor:var(--cp,pointer)}
+.nbaSch:hover{color:#fff}.nbaSch img{width:24px;height:24px;object-fit:contain}.nbaSch b{font:9px var(--title)}.nbaSch b.w{color:#7fe08a}.nbaSch b.l{color:#ff7a8a}
 .nbaPl.st{font-weight:600}
 #nbaDetail{display:flex;flex-direction:column;gap:20px;align-items:flex-start}
 #nbaDetail>.sysCard{align-self:stretch;overflow-x:auto}
@@ -235,6 +239,7 @@ export default async function (ctx) {
       const r = el('div', 'nbaTeam' + (st.state === 'post' && !t.winner ? ' lost' : '')), logo = el('img'), n = el('div', 'tn');
       logo.src = t.team.logo || ''; logo.onerror = () => logo.style.visibility = 'hidden';
       n.append(t.team.shortDisplayName || t.team.displayName, el('small', '', (t.homeAway === 'home' ? 'domicile' : 'extérieur') + (t.records?.[0]?.summary ? ' · ' + t.records[0].summary : '')));
+      n.classList.add('nbaTn'); n.title = 'Voir les matchs de cette équipe'; n.onclick = ev => { ev.stopPropagation(); nbaTeam(t.team.abbreviation, () => nbaClose()); };
       r.append(logo, n, nbaStar(t.team.abbreviation), el('span', 'nbaScore', st.state === 'pre' ? '' : t.score));
       card.append(r);
     }
@@ -252,6 +257,29 @@ export default async function (ctx) {
     card.classList.add('click'); card.title = 'Voir la feuille de match et les stats avancées'; card.onclick = () => nbaGame(e.id);
     return card;
   }
+  // la page d'une équipe : ses prochains matchs et ses derniers résultats (un clic ouvre le match)
+  const nbaSchedule = abbr => nbaFetch('site/v2/sports/basketball/nba/teams/' + abbr.toLowerCase() + '/schedule');
+  const nbaSide = (e, abbr) => { const cs = e.competitions?.[0]?.competitors || []; return {me: cs.find(c => c.team.abbreviation === abbr), op: cs.find(c => c.team.abbreviation !== abbr)}; };
+  async function nbaTeam(abbr, back) {
+    nbaLoading('des matchs');
+    let j; try { j = await nbaSchedule(abbr); } catch (err) { return nbaDetail([el('div', 'hint', 'Matchs indisponibles : ' + err.message)], back); }
+    const evs = j.events || [], done = e => e.competitions?.[0]?.status?.type?.completed;
+    const past = evs.filter(done).reverse().slice(0, 12), next = evs.filter(e => !done(e)).slice(0, 12);
+    const row = e => {
+      const {me, op} = nbaSide(e, abbr), d = new Date(e.date), r = el('div', 'nbaSch'), logo = el('img');
+      logo.src = op?.team.logos?.[0]?.href || ''; logo.onerror = () => logo.style.visibility = 'hidden';
+      r.append(el('span', '', d.toLocaleDateString('fr-FR', {weekday: 'short', day: 'numeric', month: 'short'})), logo, el('span', '', (me?.homeAway === 'home' ? 'contre ' : 'à ') + (op?.team.displayName || '?')));
+      if (done(e)) { const w = me?.winner, b = el('b', w ? 'w' : 'l', (w ? 'V ' : 'D ') + (me?.score?.displayValue ?? '') + '-' + (op?.score?.displayValue ?? '')); r.append(b); }
+      else r.append(el('span', '', d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})));
+      r.title = 'Voir ce match'; r.onclick = () => nbaGame(e.id);
+      return r;
+    };
+    const head = el('div', 'sysCard px'), h = el('div', 'nbaHead'), logo = el('img');
+    logo.src = j.team?.logo || ''; logo.onerror = () => logo.style.visibility = 'hidden';
+    h.append(logo, el('div', 'nbaName', j.team?.displayName || abbr), nbaStar(abbr)); head.append(h, el('div', 'hint', j.team?.recordSummary ? 'Bilan ' + j.team.recordSummary + (j.team.standingSummary ? ' · ' + j.team.standingSummary : '') : ''));
+    const card = (t, list) => { const c = el('div', 'sysCard px'); c.append(el('span', 'label', t), ...(list.length ? list.map(row) : [el('div', 'hint', 'Aucun.')])); return c; };
+    nbaDetail([head, card('Prochains matchs', next), card('Derniers résultats', past)], back);
+  }
   function nbaStandings(st) {
     $('nbaStandings').replaceChildren(...(st.children || []).map(conf => {
       const card = el('div', 'sysCard px'), stat = (en, k) => en.stats.find(s => s.name === k)?.displayValue ?? '';
@@ -263,7 +291,7 @@ export default async function (ctx) {
         const r = el('div', 'nbaRow' + (isFav(en.team.abbreviation) ? ' fav' : '') + (i === 6 || i === 10 ? ' cut' : '')), logo = el('img');
         logo.src = en.team.logos?.[0]?.href || ''; logo.onerror = () => logo.style.visibility = 'hidden';
         const name = el('span', 'tn', en.team.shortDisplayName || en.team.displayName);
-        name.append(nbaStar(en.team.abbreviation));
+        name.append(nbaStar(en.team.abbreviation)); name.classList.add('nbaTn'); name.title = 'Voir les matchs de cette équipe'; name.onclick = () => nbaTeam(en.team.abbreviation, () => nbaClose());
         r.append(el('span', '', i + 1), logo, name, el('span', '', stat(en, 'wins') + '-' + stat(en, 'losses')), el('span', '', stat(en, 'winPercent')), el('span', '', stat(en, 'gamesBehind')), el('span', '', stat(en, 'streak')));
         r.title = i < 6 ? 'Qualifiée pour les playoffs' : i < 10 ? 'Play-in' : '';
         card.append(r);
@@ -295,7 +323,28 @@ export default async function (ctx) {
   $('nbaCal').checked = prefs.nbaCalendar !== false;
   $('nbaCal').onchange = async () => { prefs = await neo.setSettings({nbaCalendar: $('nbaCal').checked}); nbaCalendar(); ctx.host.toast(prefs.nbaCalendar ? 'Les matchs de tes équipes sont dans ton emploi du temps' : 'Les matchs ne sont plus dans ton emploi du temps'); };
   nbaCalendar(); const calTimer = setInterval(nbaCalendar, 3 * 3600e3);
+  const seen = new Set(prefs.nbaNotified || []);
+  const nbaNotifs = (evs, abbr, now) => evs.flatMap(e => {  // ce qu'il faut annoncer : un match qui commence dans l'heure, un match terminé depuis moins de 6 h
+    const st = e.competitions?.[0]?.status?.type || {}, t = new Date(e.date).getTime(), {me, op} = nbaSide(e, abbr), vs = (me?.homeAway === 'home' ? 'contre ' : 'à ') + (op?.team.displayName || '?');
+    if (!st.completed && t > now && t - now <= 36e5) return [{key: 'm' + e.id, type: 'match', title: 'Match dans ' + Math.max(1, Math.round((t - now) / 6e4)) + ' min · ' + (me?.team.displayName || abbr), body: vs + ' à ' + new Date(t).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}];
+    if (st.completed && now - t < 6 * 36e5) return [{key: 'r' + e.id, type: 'resultat', title: (me?.winner ? 'Victoire' : 'Défaite') + ' · ' + (me?.team.displayName || abbr), body: (me?.score?.displayValue ?? '') + '-' + (op?.score?.displayValue ?? '') + ' ' + vs}];
+    return [];
+  });
+  console.assert(nbaNotifs([{id: '1', date: new Date(9e5).toISOString(), competitions: [{status: {type: {}}, competitors: [{team: {abbreviation: 'BOS', displayName: 'Boston'}, homeAway: 'home'}, {team: {abbreviation: 'NY', displayName: 'New York'}}]}]}], 'BOS', 0)[0]?.key === 'm1', 'nbaNotifs');
+  async function nbaNotify() {
+    if (prefs.nbaNotify === false || !ctx.notifications) return;
+    for (const abbr of favs()) {
+      try {
+        for (const n of nbaNotifs((await nbaSchedule(abbr)).events || [], abbr, Date.now())) {
+          if (seen.has(n.key)) continue;
+          seen.add(n.key); ctx.notifications.send({type: n.type, title: n.title, body: n.body, open: 'plugin:neodex.nba'}).catch(() => {});
+        }
+      } catch {}
+    }
+    prefs = await neo.setSettings({nbaNotified: [...seen].slice(-60)});
+  }
+  nbaNotify(); const notifTimer = setInterval(nbaNotify, 15 * 6e4);
   // ---- fin ----
   ctx.onOpen(() => { nbaRender(); });
-  ctx.onClose(() => { clearTimeout(nbaTimer); clearInterval(calTimer); });
+  ctx.onClose(() => { clearTimeout(nbaTimer); clearInterval(calTimer); clearInterval(notifTimer); });
 }

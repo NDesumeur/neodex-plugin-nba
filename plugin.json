@@ -1,9 +1,9 @@
 {
   "id": "neodex.nba",
   "name": "NBA",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "author": "NDesumeur",
-  "description": "Scores et classements NBA de chaque nuit, feuilles de match et fiches joueurs (données ESPN).",
+  "description": "Scores et classements NBA de chaque nuit, page de chaque équipe (prochains matchs et résultats), feuilles de match, fiches joueurs et notifications des matchs de tes équipes (données ESPN).",
   "icon": "icon.png",
   "entry": "index.js",
   "view": "nba",
@@ -23,6 +23,17 @@
     "background",
     "network:a.espncdn.com",
     "network:site.api.espn.com",
-    "network:site.web.api.espn.com"
+    "network:site.web.api.espn.com",
+    "notifications"
+  ],
+  "notifications": [
+    {
+      "type": "match",
+      "description": "Un match d'une de tes équipes commence dans l'heure."
+    },
+    {
+      "type": "resultat",
+      "description": "Le score final d'un match d'une de tes équipes."
+    }
   ]
 }
