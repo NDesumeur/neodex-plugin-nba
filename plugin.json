@@ -1,7 +1,7 @@
 {
   "id": "neodex.nba",
   "name": "NBA",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "author": "NDesumeur",
   "description": "Les matchs NBA de chaque nuit aux heures de Paris avec scores en direct, feuilles de match (quart-temps, stats des équipes et des joueurs, stats avancées eFG %, TS %, rythme), classement Est et Ouest avec playoffs et play-in, page de chaque équipe et fiches joueurs. Étoile sur tes équipes : leurs matchs en premier, dans ton emploi du temps et notifiés (début et score final). Données ESPN.",
   "icon": "icon.png",
