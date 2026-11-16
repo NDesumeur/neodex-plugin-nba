@@ -1,18 +1,37 @@
 // NBA : ton appli d'origine (HTML et code inchangés), livrée en plugin.
 // Ses données sont dans le dossier du plugin, que NeoDex sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoDex.
 // Elle tourne dans le bac à sable de NeoDex, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
-const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\"label\">NBA</span><span id=\"nbaDay\"></span>\n        <div class=\"agNav\" id=\"nbaDayNav\"><button class=\"btn px\" id=\"nbaPrev\" title=\"Nuit précédente\">&lt;</button><button class=\"btn px\" id=\"nbaToday\">CETTE NUIT</button><button class=\"btn px\" id=\"nbaNext\" title=\"Nuit suivante\">&gt;</button></div>\n        <div class=\"agNav\" id=\"nbaTabs\"><button class=\"btn px\" data-v=\"games\">MATCHS</button><button class=\"btn px\" data-v=\"standings\">CLASSEMENT</button></div></div>\n      <label style=\"display:flex;gap:8px;align-items:center;margin:6px 0 10px;color:var(--shell);font-size:14px\"><input type=\"checkbox\" id=\"nbaCal\"> Ajouter les matchs de mes équipes favorites (★) à mon emploi du temps, mis à jour automatiquement</label>\n      <div id=\"nbaGames\" class=\"nbaGrid\"></div>\n      <div id=\"nbaStandings\" class=\"stCols\"></div>\n      <div id=\"nbaDetail\" style=\"display:none\"></div>\n      <div class=\"hint\">Données ESPN, heures de Paris. Clique sur un match pour sa feuille de match et ses stats avancées, sur un joueur pour ses stats. L'étoile d'une équipe en fait ton équipe : ses matchs passent en premier.</div>\n    </div>";
-/*CSS-MOVED*/ const CSS = `#nbaDay{font-size:17px;color:#fff}
+const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span class=\"label\">NBA</span><span id=\"nbaDay\"></span>\n        <div class=\"agNav\" id=\"nbaDayNav\"><button class=\"btn px\" id=\"nbaPrev\" title=\"Nuit précédente\">&lt;</button><button class=\"btn px\" id=\"nbaToday\">CETTE NUIT</button><button class=\"btn px\" id=\"nbaNext\" title=\"Nuit suivante\">&gt;</button></div>\n        <div class=\"agNav\" id=\"nbaTabs\"><button class=\"btn px\" data-v=\"games\">MATCHS</button><button class=\"btn px\" data-v=\"standings\">CLASSEMENT</button><button class=\"btn px\" data-v=\"playoffs\">PLAYOFFS</button></div></div>\n      <label style=\"display:flex;gap:8px;align-items:center;margin:6px 0 10px;color:var(--shell);font-size:14px\"><input type=\"checkbox\" id=\"nbaCal\"> Ajouter les matchs de mes équipes favorites (★) à mon emploi du temps, mis à jour automatiquement</label>\n      <div id=\"nbaGames\" class=\"nbaGrid\"></div>\n      <div id=\"nbaStandings\" class=\"stCols\"></div>\n      <div id=\"nbaPlayoffs\" style=\"display:none\"></div>\n      <div id=\"nbaDetail\" style=\"display:none\"></div>\n      <div class=\"hint\">Données ESPN, heures de Paris. Clique sur un match pour sa feuille de match et ses stats avancées, sur un joueur pour ses stats. L'étoile d'une équipe en fait ton équipe : ses matchs passent en premier.</div>\n    </div>";
+/*CSS-MOVED*/ const CSS = `#nbaDay{font-size:19px;color:#fff}
+.nbaGame .nbaTeam{grid-template-columns:clamp(36px,3vw,54px) 1fr auto clamp(56px,4.6vw,84px)}
+.nbaGame .nbaTeam img{width:clamp(36px,3vw,54px);height:clamp(36px,3vw,54px)}
+.nbaGame .nbaTeam .tn{font-size:clamp(17px,1.25vw,22px)}.nbaGame .nbaTeam small{font-size:clamp(12px,.85vw,15px)}
+.nbaGame .hint{font-size:clamp(13px,.9vw,15px)}
+.nbaBr{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:clamp(6px,.8vw,16px)}
+.nbaBr>div{display:flex;flex-direction:column;gap:8px;min-width:0}.nbaBr>div>div{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:10px;min-height:clamp(360px,calc(100vh - 360px),700px)}
+.nbaBr h4{margin:0;font:clamp(9px,.65vw,11px) var(--title);letter-spacing:1px;line-height:1.6;min-height:3.2em;color:var(--muted);text-align:center}
+.nbaMu{display:flex;flex-direction:column;gap:2px;padding:6px 8px;background:rgba(0,0,0,.25);box-shadow:0 0 0 2px var(--line);font-size:clamp(13px,.95vw,16px);color:#fff;min-width:0}
+.nbaMu.fin{box-shadow:0 0 0 2px var(--magenta)}
+.nbaMu>div{display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden}
+.nbaMu img{width:clamp(18px,1.4vw,26px);height:clamp(18px,1.4vw,26px);object-fit:contain;flex:none}
+.nbaMu i{font-style:normal;color:var(--muted);width:1.2em;text-align:right;flex:none}.nbaMu .pi{font-size:10px;color:#ffd07a}.nbaMu i.p{color:#ffd07a}@media (max-width:1300px){.nbaMu .pi{display:none}}.nbaMu .fv{color:#ffd07a}
+.nbaVs{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;text-align:center}
+.nbaVs img{width:clamp(120px,10vw,180px);aspect-ratio:4/3;object-fit:cover;object-position:top;background:rgba(0,0,0,.2)}
+.nbaVs .vs{font:clamp(18px,1.6vw,28px) var(--title);color:var(--pink)}
+.nbaVid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(220px,17vw,300px),1fr));gap:14px;margin-top:8px}
+.nbaVid button{all:unset;cursor:var(--cp,pointer);display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--lilac)}
+.nbaVid button:hover{color:#fff}.nbaVid img{width:100%;aspect-ratio:16/9;object-fit:cover;background:rgba(0,0,0,.3)}
+.nbaPlBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 #nbaDayNav{margin-left:auto}
 #nbaTabs{margin-left:12px}
 #nbaTabs .btn.on{--c:var(--magenta);color:#fff}
-.nbaGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.nbaGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(340px,25vw,480px),1fr));gap:clamp(16px,1.4vw,26px)}
 .nbaGame{gap:8px}
 .nbaGame.fav{--c:var(--magenta)}
-.nbaScore{font:20px var(--title);color:#fff;text-align:right}
+.nbaScore{font:clamp(22px,1.9vw,34px) var(--title);color:#fff;text-align:right}
 .nbaTeam.lost .tn{color:var(--muted)}
 .nbaTeam.lost .nbaScore{color:var(--muted)}
-.nbaStatus{font:8px var(--title);letter-spacing:1px;color:var(--lilac);padding-top:6px;border-top:1px solid rgba(255,255,255,.06)}
+.nbaStatus{font:clamp(10px,.7vw,12px)/1.5 var(--title);letter-spacing:1px;color:var(--lilac);padding-top:6px;border-top:1px solid rgba(255,255,255,.06)}
 .nbaStatus.live{color:#fff}
 .nbaStatus.live::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;background:var(--red);animation:blink 1s steps(2) infinite}
 .nbaStar{all:unset;cursor:var(--cp,pointer);color:var(--muted);font-size:16px;padding:0 4px}
@@ -27,16 +46,16 @@ const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\
 .nbaTn{cursor:var(--cp,pointer)}.nbaTn:hover{color:var(--pink)}
 .nbaHead{display:flex;align-items:center;gap:14px}.nbaHead img{width:56px;height:56px;object-fit:contain}
 .nbaSch{display:grid;grid-template-columns:110px 28px 1fr auto;gap:10px;align-items:center;font-size:14px;color:var(--lilac);padding:5px 0;border-top:1px solid rgba(255,255,255,.05);cursor:var(--cp,pointer)}
-.nbaSch:hover{color:#fff}.nbaSch img{width:24px;height:24px;object-fit:contain}.nbaSch b{font:9px var(--title)}.nbaSch b.w{color:#7fe08a}.nbaSch b.l{color:#ff7a8a}
+.nbaSch:hover{color:#fff}.nbaSch img{width:24px;height:24px;object-fit:contain}.nbaSch b{font:11px var(--title)}.nbaSch b.w{color:#7fe08a}.nbaSch b.l{color:#ff7a8a}
 .nbaPl.st{font-weight:600}
 #nbaDetail{display:flex;flex-direction:column;gap:20px;align-items:flex-start}
 #nbaDetail>.sysCard{align-self:stretch;overflow-x:auto}
 .nbaTable{border-collapse:collapse;font-size:14px;color:var(--lilac);width:100%}
-.nbaTable th{font:7px var(--title);letter-spacing:1px;color:var(--muted);text-align:right;padding:6px 8px;white-space:nowrap}
+.nbaTable th{font:clamp(9px,.65vw,11px) var(--title);letter-spacing:1px;color:var(--muted);text-align:right;padding:6px 8px;white-space:nowrap}
 .nbaTable td{text-align:right;padding:5px 8px;border-top:1px solid rgba(255,255,255,.06);white-space:nowrap}
 .nbaTable th:first-child,.nbaTable td:first-child{text-align:left}
 .nbaTable tr:hover td{background:rgba(var(--pkr),.06)}
-.nbaCmp{display:grid;grid-template-columns:70px 1fr 70px;gap:4px 10px;align-items:center;font-size:14px;color:var(--lilac)}
+.nbaCmp{display:grid;grid-template-columns:clamp(70px,6vw,110px) 1fr clamp(70px,6vw,110px);gap:4px 10px;align-items:center;font-size:clamp(14px,.95vw,17px);color:var(--lilac)}
 .nbaCmp b{color:#fff;font-weight:600}
 .nbaCmp b:last-of-type{text-align:right}
 .nbaCmp span{text-align:center}
@@ -45,10 +64,10 @@ const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\
 .nbaBar i.win{background:var(--magenta)}
 .nbaBio{flex-direction:row!important;gap:20px;align-items:center}
 .nbaBio img{width:150px;height:110px;object-fit:cover;object-position:top;background:rgba(0,0,0,.2)}
-.nbaName{font:16px var(--title);color:#fff;margin-bottom:6px}
+.nbaName{font:clamp(16px,1.3vw,22px) var(--title);color:#fff;margin-bottom:6px}
 .nbaFacts{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin-top:10px;font-size:14px;color:var(--muted)}
 .nbaFacts b{color:#fff;font-weight:500}
-.nbaRow.head{font:7px var(--title);letter-spacing:1px;color:var(--muted)}
+.nbaRow.head{font:clamp(9px,.65vw,11px) var(--title);letter-spacing:1px;color:var(--muted)}
 .nbaRow.fav{background:rgba(var(--mgr),.14)}
 .nbaRow.cut{border-top:2px dashed var(--line2);margin-top:4px;padding-top:8px}
 `;  // le style de ce plugin (il utilise les variables du thème de NeoDex)
@@ -104,6 +123,23 @@ export default async function (ctx) {
   console.assert(Math.abs(nbaAdvanced({pts: 100, statistics: [{name: 'fieldGoalsMade-fieldGoalsAttempted', displayValue: '40-80'}, {name: 'threePointFieldGoalsMade-threePointFieldGoalsAttempted', displayValue: '10-30'}, {name: 'freeThrowsMade-freeThrowsAttempted', displayValue: '10-10'}]},
     {statistics: []}).efg - .5625) < 1e-9, 'nbaAdvanced');
 
+  const nbaCmpRow = (at, name, bt, low) => {
+    const av = nbaN(at), bv = nbaN(bt), r = el('div', 'nbaCmp'), bar = el('div', 'nbaBar'), l = el('i'), rr = el('i');
+    const share = av + bv ? av / (av + bv) * 100 : 50; l.style.width = share + '%'; rr.style.width = 100 - share + '%';
+    (av === bv ? null : (low ? av < bv : av > bv) ? l : rr)?.classList.add('win');
+    bar.append(l, rr); r.append(el('b', '', at), el('span', '', name), el('b', '', bt), bar); return r;
+  };
+  // les moments forts d'un match : les vidéos que donne ESPN, chacune ouvre sa page dans un onglet
+  const nbaVideos = list => {
+    const vids = (list || []).map(v => ({v, href: v.links?.web?.href || v.links?.source?.href})).filter(x => x.href).slice(0, 12); if (!vids.length) return null;
+    const card = el('div', 'sysCard px'), g = el('div', 'nbaVid'); card.append(el('span', 'label', 'Moments forts'), g);
+    for (const {v, href} of vids) {
+      const bt = el('button'), im = el('img'), th = v.thumbnail || v.images?.[0]?.url; if (th) im.src = th; else im.style.visibility = 'hidden'; im.onerror = () => im.style.visibility = 'hidden'; im.alt = '';
+      bt.append(im, el('span', '', '▶ ' + (v.headline || v.title || 'Vidéo') + (v.duration ? ' · ' + Math.floor(v.duration / 60) + ':' + String(v.duration % 60).padStart(2, '0') : ''))); bt.title = 'Ouvrir la vidéo dans un onglet'; bt.dataset.href = href;
+      bt.onclick = () => newTab(href); g.append(bt);
+    }
+    return card;
+  };
   async function nbaGame(id) {
     nbaLoading('du match');
     let s; try { s = await nbaFetch('site/v2/sports/basketball/nba/summary?event=' + id); } catch (e) { return nbaDetail([el('div', 'hint', 'Match indisponible : ' + e.message)]); }
@@ -122,6 +158,7 @@ export default async function (ctx) {
     if (q) top.append(nbaTable(['', ...Array.from({length: q}, (_, i) => i < 4 ? i + 1 + 'e QT' : 'Prol. ' + (i - 3)), 'Total'], teams.map(t => [t.team.abbreviation, ...Array.from({length: q}, (_, i) => t.linescores?.[i]?.displayValue ?? ''), t.score])));
     const v = s.gameInfo?.venue; if (v) top.append(el('div', 'hint', v.fullName + (v.address?.city ? ', ' + v.address.city : '') + (s.gameInfo.attendance ? ' · ' + s.gameInfo.attendance.toLocaleString('fr-FR') + ' spectateurs' : '')));
     nodes.push(top);
+    const vid = nbaVideos(s.videos); if (vid) nodes.push(vid);
     const [ta, tb] = teams.map(t => bt(t.team.abbreviation));
     if (ta && tb) {
       ta.pts = teams[0].score; tb.pts = teams[1].score;
@@ -132,10 +169,7 @@ export default async function (ctx) {
       const card = el('div', 'sysCard px'); card.append(el('span', 'label', 'Stats des équipes · ' + teams.map(t => t.team.abbreviation).join(' / ')));
       for (const [k, name] of Object.entries(LAB)) {
         const a = ta.statistics.find(x => x.name === k), b = tb.statistics.find(x => x.name === k); if (!a || !b) continue;
-        const av = nbaN(a.displayValue), bv = nbaN(b.displayValue), r = el('div', 'nbaCmp'), bar = el('div', 'nbaBar'), l = el('i'), rr = el('i');
-        const share = av + bv ? av / (av + bv) * 100 : 50; l.style.width = share + '%'; rr.style.width = 100 - share + '%';
-        const better = LOW.includes(k) ? av < bv : av > bv; (av === bv ? null : better ? l : rr)?.classList.add('win');
-        bar.append(l, rr); r.append(el('b', '', a.displayValue), el('span', '', name), el('b', '', b.displayValue), bar); card.append(r);
+        card.append(nbaCmpRow(a.displayValue, name, b.displayValue, LOW.includes(k)));
       }
       nodes.push(card);
       // advanced stats, computed from the box score
@@ -177,7 +211,11 @@ export default async function (ctx) {
     const cm = s => { const m = /(\d+)' (\d+)"/.exec(s || ''); return m ? Math.round((+m[1] * 12 + +m[2]) * 2.54) + ' cm' : ''; }, kg = s => { const m = /(\d+)/.exec(s || ''); return m ? Math.round(+m[1] * .4536) + ' kg' : ''; };
     const facts = [['Âge', a.age ? a.age + ' ans' : ''], ['Taille', cm(a.displayHeight)], ['Poids', kg(a.displayWeight)], ['Né à', a.displayBirthPlace], ['Draft', a.displayDraft], ['Université', a.college?.name], ['Saison en NBA', (a.displayExperience || '').replace(/(\d+)\w* Season/, '$1e')]].filter(f => f[1]);
     const dl = el('div', 'nbaFacts'); for (const [k, x] of facts) dl.append(el('span', '', k), el('b', '', x)); info.append(dl);
-    top.append(pic, info); nodes.push(top);
+    const btns = el('div', 'nbaPlBtns'), me = {a, o}, pk = el('button', 'btn px', nbaPick?.a.id === a.id ? '⚖ CHOISI POUR COMPARER' : '⚖ CHOISIR POUR COMPARER');
+    pk.onclick = () => { nbaPick = me; pk.textContent = '⚖ CHOISI POUR COMPARER'; toast('Ouvre un autre joueur pour le comparer à ' + a.displayName); };
+    btns.append(pk);
+    if (nbaPick && nbaPick.a.id !== a.id) { const p0 = nbaPick, c = el('button', 'btn px', '⚖ COMPARER AVEC ' + (p0.a.shortName || p0.a.displayName).toUpperCase()); c.onclick = () => nbaCompare(p0, me, () => nbaPlayer(id, back)); btns.append(c); }
+    info.append(btns); top.append(pic, info); nodes.push(top);
     const st = o.statistics;
     if (st?.splits?.length) {
       const FR = {GP: 'MJ', MIN: 'MIN', 'FG%': 'TIRS %', '3P%': '3 PTS %', 'FT%': 'LF %', REB: 'REB', AST: 'PD', BLK: 'CTR', STL: 'INT', PF: 'FTES', TO: 'BP', PTS: 'PTS'};
@@ -198,6 +236,35 @@ export default async function (ctx) {
     }
     nbaDetail(nodes, back);
   }
+  let nbaPick = null;  // le joueur choisi pour une comparaison
+  // deux joueurs côte à côte : leurs moyennes de la saison, la barre montre qui fait mieux (moins de balles perdues et de fautes, c'est mieux)
+  function nbaCompare(A, B, back) {
+    const top = el('div', 'sysCard px nbaVs'), side = P => { const d = el('div'), im = el('img'); if (P.a.headshot?.href) im.src = P.a.headshot.href; else im.style.visibility = 'hidden'; im.onerror = () => im.style.visibility = 'hidden'; d.append(im, el('div', 'nbaName', P.a.displayName), el('div', 'hint', P.a.team?.displayName || '')); return d; };
+    top.append(side(A), el('div', 'vs', 'VS'), side(B));
+    const split = P => P.o?.statistics?.splits?.find(s => s.displayName === 'Regular Season') || P.o?.statistics?.splits?.[0], sa = split(A), sb = split(B), card = el('div', 'sysCard px');
+    const FR = {GP: 'Matchs joués', MIN: 'Minutes', 'FG%': 'Tirs %', '3P%': '3 pts %', 'FT%': 'Lancers %', REB: 'Rebonds', AST: 'Passes déc.', BLK: 'Contres', STL: 'Interceptions', PF: 'Fautes', TO: 'Balles perdues', PTS: 'Points'};
+    card.append(el('span', 'label', 'Moyennes par match · ' + (A.a.shortName || A.a.displayName) + ' / ' + (B.a.shortName || B.a.displayName)));
+    if (sa && sb) { const la = A.o.statistics.labels, lb = B.o.statistics.labels; for (const [i, l] of la.entries()) { const j = lb.indexOf(l); if (j >= 0) card.append(nbaCmpRow(sa.stats[i], FR[l] || l, sb.stats[j], l === 'TO' || l === 'PF')); } }
+    else card.append(el('div', 'hint', 'Pas encore de stats cette saison pour l’un des deux.'));
+    nbaDetail([top, card], back);
+  }
+  // le tableau des playoffs : les 8 premiers de chaque conférence, 1 contre 8, 4 contre 5, 3 contre 6, 2 contre 7 ; les places 7 et 8 se jouent au play-in
+  const nbaPairs = seeds => [[0, 7], [3, 4], [2, 5], [1, 6]].map(([x, y]) => [seeds[x], seeds[y]]);
+  console.assert(JSON.stringify(nbaPairs([1, 2, 3, 4, 5, 6, 7, 8])) === '[[1,8],[4,5],[3,6],[2,7]]', 'nbaPairs');
+  function nbaPlayoffs(st) {
+    const stat = (en, k) => en.stats.find(s => s.name === k)?.displayValue ?? '';
+    const conf = re => { const c = (st.children || []).find(c => re.test(c.name)); return c ? [...c.standings.entries].sort((a, b) => +stat(a, 'playoffSeed') - +stat(b, 'playoffSeed')).slice(0, 8).map((en, i) => ({en, seed: i + 1})) : []; };
+    const W = conf(/West/), E = conf(/East/), team = x => { const d = el('div'); if (!x) { d.append(el('i', '', ''), el('span', '', '?')); return d; }
+      const im = el('img'), src = x.en.team.logos?.[0]?.href; if (src) im.src = src; else im.style.visibility = 'hidden'; im.onerror = () => im.style.visibility = 'hidden';
+      const n = el('span', isFav(x.en.team.abbreviation) ? 'fv' : '', x.en.team.abbreviation || x.en.team.shortDisplayName); d.append(el('i', x.seed >= 7 ? 'p' : '', x.seed), im, n); if (x.seed >= 7) d.append(el('span', 'pi', 'play-in')); d.title = x.en.team.displayName + ' · ' + stat(x.en, 'wins') + '-' + stat(x.en, 'losses'); return d; };
+    const mu = (a, b2, cls = '') => { const m = el('div', 'nbaMu ' + cls); m.append(team(a), team(b2)); return m; };
+    const col = (title, boxes) => { const c = el('div'), w = el('div'); w.append(...boxes); c.append(el('h4', '', title), w); return c; };
+    const ph = n => Array.from({length: n}, () => mu(null, null));
+    const br = el('div', 'nbaBr');
+    br.append(col('OUEST', nbaPairs(W).map(([a, b2]) => mu(a, b2))), col('DEMI-FINALES', ph(2)), col('FINALE OUEST', ph(1)), col('FINALE NBA', [mu(null, null, 'fin')]), col('FINALE EST', ph(1)), col('DEMI-FINALES', ph(2)), col('EST', nbaPairs(E).map(([a, b2]) => mu(a, b2))));
+    const card = el('div', 'sysCard px'); card.append(el('span', 'label', 'Tableau des playoffs · si la saison s’arrêtait ce soir'), br, el('div', 'hint', 'D’après le classement du moment. Les places 7 et 8 (en jaune) se jouent au play-in (7 à 10). Survole une équipe pour son bilan.'));
+    $('nbaPlayoffs').replaceChildren(card);
+  }
   /* ---------- NBA app: scores of a night and standings, from ESPN's public JSON (no account); the favorite team (settings.nbaTeam) comes first ---------- */
   const NBA = 'https://site.api.espn.com/apis/', nbaFetch = p => fetch(NBA + p).then(r => { if (!r.ok) throw new Error('ESPN ' + r.status); return r.json(); });
   let nbaDate = null, nbaView = 'games', nbaTimer = null;
@@ -211,6 +278,7 @@ export default async function (ctx) {
     b.onclick = async e => { e.stopPropagation(); const set = new Set(favs()); set.has(abbr) ? set.delete(abbr) : set.add(abbr); prefs = await neo.setSettings({nbaTeams: [...set], nbaTeam: ''}); nbaRender(); nbaCalendar(); };
     return b;
   };
+  const nbaShow = v => { for (const [id, k] of [['nbaGames', 'games'], ['nbaStandings', 'standings'], ['nbaPlayoffs', 'playoffs']]) $(id).style.display = v === k ? '' : 'none'; };
   async function nbaRender() {
     clearTimeout(nbaTimer);
     if (!view.classList.contains('on')) return;
@@ -220,9 +288,10 @@ export default async function (ctx) {
     view.querySelectorAll('#nbaTabs .btn').forEach(b => b.classList.toggle('on', b.dataset.v === nbaView));
     $('nbaDayNav').style.visibility = nbaView === 'games' ? '' : 'hidden';
     if (nbaBack !== null || $('nbaDetail').style.display !== 'none') return;  // a game or a player is open: the live refresh waits
-    $('nbaGames').style.display = nbaView === 'games' ? '' : 'none'; $('nbaStandings').style.display = nbaView === 'games' ? 'none' : '';
+    nbaShow(nbaView);
     try {
       if (nbaView === 'standings') return nbaStandings(await nbaFetch('v2/sports/basketball/nba/standings'));
+      if (nbaView === 'playoffs') return nbaPlayoffs(await nbaFetch('v2/sports/basketball/nba/standings'));
       const sb = await nbaFetch('site/v2/sports/basketball/nba/scoreboard?dates=' + nbaDate.replace(/-/g, ''));
       const games = (sb.events || []).map(e => ({e, c: e.competitions[0]})).sort((a, b) => {
         const fav = g => g.c.competitors.some(t => isFav(t.team.abbreviation)) ? 0 : 1;
@@ -230,7 +299,7 @@ export default async function (ctx) {
       });
       $('nbaGames').replaceChildren(...(games.length ? games.map(nbaCard) : [el('div', 'hint', 'Aucun match cette nuit-là.')]));
       if (games.some(g => g.e.status.type.state === 'in')) nbaTimer = setTimeout(nbaRender, 30000);  // live scores
-    } catch (err) { $('nbaGames').replaceChildren(el('div', 'hint', 'Résultats indisponibles : ' + err.message + '. Vérifie ta connexion.')); }
+    } catch (err) { $(nbaView === 'playoffs' ? 'nbaPlayoffs' : nbaView === 'standings' ? 'nbaStandings' : 'nbaGames').replaceChildren(el('div', 'hint', 'Données indisponibles : ' + err.message + '. Vérifie ta connexion.')); }
   }
   function nbaCard({e, c}) {
     const st = e.status.type, card = el('div', 'sysCard px nbaGame'), teams = [...c.competitors].sort((a, b) => a.homeAway === 'away' ? -1 : 1);
@@ -345,6 +414,7 @@ export default async function (ctx) {
   }
   nbaNotify(); const notifTimer = setInterval(nbaNotify, 15 * 6e4);
   // ---- fin ----
+  view.__nba = {card: nbaCard, playoffs: nbaPlayoffs, compare: nbaCompare, videos: nbaVideos, show: v => { nbaView = v; nbaBack = null; $('nbaDetail').style.display = 'none'; nbaShow(v); view.querySelectorAll('#nbaTabs .btn').forEach(b => b.classList.toggle('on', b.dataset.v === v)); }, close: () => { nbaBack = null; $('nbaDetail').style.display = 'none'; }};  // pour l'auto-test
   ctx.onOpen(() => { nbaRender(); });
   ctx.onClose(() => { clearTimeout(nbaTimer); clearInterval(calTimer); clearInterval(notifTimer); });
 }
